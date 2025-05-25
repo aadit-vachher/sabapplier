@@ -1,93 +1,82 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper, CircularProgress } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import Navbar from '../components/Navbar';
+import './AskAI.css';
 
 const AskAI = () => {
   const [question, setQuestion] = useState('');
-  const [response, setResponse] = useState('');
+  const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleAsk = async (e) => {
     e.preventDefault();
+    if (!question.trim()) return;
+
     setLoading(true);
+    setAnswer('');
     setError('');
-    setResponse('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/ask-ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ question })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: 'Failed to get response' }));
-        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
-      }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: question }],
+              },
+            ],
+          }),
+        }
+      );
 
       const data = await res.json();
-      setResponse(data.response);
+
+      if (res.ok && data && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        setAnswer(data.candidates[0].content.parts[0].text);
+      } else {
+        setError('AI could not generate an answer. Please try again.');
+      }
     } catch (err) {
-      console.error('Error:', err);
-      setError(err.message || 'Failed to get response. Please try again.');
-    } finally {
-      setLoading(false);
+      console.error(err);
+      setError('Something went wrong. Please try again.');
     }
+
+    setLoading(false);
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Ask AI Assistant
-        </Typography>
-        
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            variant="outlined"
-            label="Ask your question"
+    <>
+      <Navbar />
+      <div className="askai-container">
+        <h2>💬 Ask AI About Anything</h2>
+        <form onSubmit={handleAsk} className="askai-form">
+          <input
+            type="text"
+            placeholder="Type your question..."
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            sx={{ mb: 2 }}
+            required
           />
-          
-          <Button
-            type="submit"
-            variant="contained"
-            endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-            disabled={loading || !question.trim()}
-            sx={{ mb: 2 }}
-          >
-            {loading ? 'Getting Response...' : 'Send Question'}
-          </Button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Asking...' : 'Ask AI'}
+          </button>
         </form>
 
-        {error && (
-          <Typography color="error" sx={{ mt: 2 }}>
-            {error}
-          </Typography>
+        {error && <p className="error">{error}</p>}
+        {answer && (
+          <div className="ai-answer">
+            <h3>🧠 AI Answer:</h3>
+            <p>{answer}</p>
+          </div>
         )}
-
-        {response && (
-          <Paper variant="outlined" sx={{ p: 2, mt: 2, bgcolor: 'background.default' }}>
-            <Typography variant="h6" gutterBottom>
-              Response:
-            </Typography>
-            <Typography whiteSpace="pre-wrap">
-              {response}
-            </Typography>
-          </Paper>
-        )}
-      </Paper>
-    </Box>
+      </div>
+    </>
   );
 };
 
-export default AskAI; 
+export default AskAI;
