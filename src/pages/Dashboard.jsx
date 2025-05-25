@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import UploadForm from '../components/UploadForm';
 import './Dashboard.css';
+import Navbar from '../components/Navbar';
+
 
 function Dashboard() {
   const [documents, setDocuments] = useState([]);
@@ -19,7 +21,9 @@ function Dashboard() {
   };
 
   return (
+    
     <div className="dashboard-wrapper">
+      <Navbar/>
       <div className="dashboard-card">
         <h2>📁 Your Document Portal</h2>
         <UploadForm onUpload={handleUpload} />
@@ -38,7 +42,9 @@ function Dashboard() {
           )}
         </div>
       </div>
+
     </div>
+    
   );
 }
 
