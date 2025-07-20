@@ -12,9 +12,6 @@ function Navbar() {
         <Link to="/dashboard" className={location.pathname === '/dashboard' ? 'active' : ''}>
           Dashboard
         </Link>
-        <Link to="/ask-ai" className={location.pathname === '/ask-ai' ? 'active' : ''}>
-          Ask AI
-        </Link>
       </div>
     </nav>
   );
